@@ -3,6 +3,7 @@ from telebot import types
 import sqlite3
 from datetime import datetime, timedelta
 import threading
+import logging
 import time
 
 API_TOKEN = '7680225007:AAFx0-YC99FAgpVAYgWpeu_1fOyq9RoxJEY'
@@ -60,23 +61,30 @@ def send_welcome(message):
         """.strip(), reply_markup=markup)
 
 
-
-
-
 def log_interacted_user(user_id):
     """Записываем пользователя, который взаимодействовал с ботом, но не купил подписку"""
     connection = sqlite3.connect("C:\\Users\\anm24\\Desktop\\test\\interacted_users.db")
     cursor = connection.cursor()
     
-    # Проверяем, если пользователь уже есть в базе, чтобы не добавлять его дважды
-    cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
-    user = cursor.fetchone()
-    
-    if user is None:
-        cursor.execute("INSERT INTO users (user_id) VALUES (?)", (user_id,))
-        connection.commit()
-    
-    connection.close()
+    try:
+        # Проверяем, если пользователь уже есть в базе, чтобы не добавлять его дважды
+        cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
+        user = cursor.fetchone()
+        
+        if user is None:
+            cursor.execute("INSERT INTO users (user_id) VALUES (?)", (user_id,))
+            connection.commit()
+            logging.info(f"User {user_id} logged.")
+        else:
+            logging.info(f"User {user_id} already exists in the database.")
+
+    except sqlite3.IntegrityError as e:
+        logging.error(f"Integrity error occurred: {e}")
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+    finally:
+        connection.close()
+
 
 
 
