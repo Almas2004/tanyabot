@@ -67,23 +67,16 @@ def log_interacted_user(user_id):
     cursor = connection.cursor()
     
     try:
-        # Проверяем, если пользователь уже есть в базе, чтобы не добавлять его дважды
-        cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
-        user = cursor.fetchone()
+        # Вставляем пользователя, если он еще не существует
+        cursor.execute("INSERT OR IGNORE INTO users (user_id) VALUES (?)", (user_id,))
+        connection.commit()
         
-        if user is None:
-            cursor.execute("INSERT INTO users (user_id) VALUES (?)", (user_id,))
-            connection.commit()
-            logging.info(f"User {user_id} logged.")
-        else:
-            logging.info(f"User {user_id} already exists in the database.")
-
     except sqlite3.IntegrityError as e:
         logging.error(f"Integrity error occurred: {e}")
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
+        
     finally:
         connection.close()
+
 
 
 
